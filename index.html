@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Majesco | Precision Agent Hub</title>
+
+  <!-- 1. Glean JS library -->
+  <script defer src="https://app.glean.com/embedded-search-latest.min.js"></script>
+
+  <style>
+    :root {
+      --majesco-navy: #0a1f44;
+      --majesco-navy-2: #0d2756;
+      --majesco-blue: #1f4ed8;
+      --majesco-accent: #00b3e3;
+      --majesco-violet: #6b7df0;
+      --majesco-green: #21c07a;
+      --bg: #f4f6fb;
+      --card: #ffffff;
+      --text: #1a1f36;
+      --muted: #5b6478;
+      --border: #e3e8f0;
+      --sidebar-bg: #0a1f44;
+      --sidebar-hover: rgba(255, 255, 255, 0.06);
+      --gradient-brand: linear-gradient(135deg, #1f4ed8 0%, #00b3e3 100%);
+      --gradient-soft: linear-gradient(135deg, rgba(31,78,216,0.15), rgba(0,179,227,0.15));
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+        "Helvetica Neue", Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+    }
+
+    body { display: flex; flex-direction: column; min-height: 100vh; }
+
+    /* ---------- Header ---------- */
+    header.site-header {
+      position: relative;
+      background:
+        radial-gradient(1200px 200px at 0% 0%, rgba(31,78,216,0.35), transparent 60%),
+        radial-gradient(900px 200px at 100% 0%, rgba(0,179,227,0.25), transparent 60%),
+        linear-gradient(180deg, var(--majesco-navy) 0%, var(--majesco-navy-2) 100%);
+      color: #fff;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 24px;
+      box-shadow: 0 1px 0 rgba(255,255,255,0.04), 0 6px 18px rgba(10,31,68,0.25);
+    }
+
+    /* Animated accent bar at the bottom of the header */
+    header.site-header::after {
+      content: "";
+      position: absolute;
+      left: 0; right: 0; bottom: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--majesco-accent), var(--majesco-violet), var(--majesco-blue), transparent);
+      background-size: 200% 100%;
+      animation: shimmer 6s linear infinite;
+    }
+    @keyframes shimmer {
+      0% { background-position: 0% 0; }
+      100% { background-position: 200% 0; }
+    }
+
+    .brand { display: flex; align-items: center; gap: 14px; min-width: 0; }
+
+    .brand-mark {
+      height: 28px !important;
+      max-height: 28px !important;
+      width: auto !important;
+      max-width: 120px !important;
+      object-fit: contain;
+      display: inline-block;
+      vertical-align: middle;
+      flex-shrink: 0;
+    }
+
+    .brand-divider {
+      width: 1px; height: 22px;
+      background: rgba(255,255,255,0.18);
+      flex-shrink: 0;
+    }
+
+    .brand-title {
+      font-weight: 600;
+      letter-spacing: 0.2px;
+      font-size: 15px;
+      color: #fff;
+      white-space: nowrap;
+    }
+    .brand-tagline {
+      font-size: 11px;
+      color: #9eb3d8;
+      letter-spacing: 0.6px;
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+
+    .header-right {
+      display: flex; align-items: center; gap: 14px;
+    }
+
+    .user-chip {
+      display: flex; align-items: center; gap: 10px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      padding: 6px 10px 6px 6px;
+      border-radius: 999px;
+      backdrop-filter: blur(6px);
+    }
+    .avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--gradient-brand);
+      color: #fff; font-weight: 700; font-size: 11px;
+      display: inline-flex; align-items: center; justify-content: center;
+      box-shadow: 0 0 0 2px rgba(255,255,255,0.08);
+    }
+    .user-name { font-size: 12px; color: #cdd6e4; }
+
+    .header-meta { font-size: 12px; color: #9eb3d8; }
+
+    /* ---------- Layout ---------- */
+    .layout {
+      flex: 1;
+      display: grid;
+      grid-template-columns: 300px 1fr;
+      min-height: 0;
+    }
+
+    /* ---------- Sidebar ---------- */
+    aside.sidebar {
+      background: linear-gradient(180deg, var(--majesco-navy) 0%, #08193a 100%);
+      color: #e6ebf5;
+      padding: 22px 14px 14px;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      border-right: 1px solid rgba(255, 255, 255, 0.05);
+    }
+
+    .sidebar-section-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 1.4px;
+      color: #7d8dac;
+      padding: 4px 12px 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .sidebar-section-label .pulse-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--majesco-green);
+      box-shadow: 0 0 0 0 rgba(33,192,122,0.5);
+      animation: pulse 2s infinite;
+    }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(33,192,122,0.5); }
+      70% { box-shadow: 0 0 0 8px rgba(33,192,122,0); }
+      100% { box-shadow: 0 0 0 0 rgba(33,192,122,0); }
+    }
+
+    /* Vertical journey rail */
+    #agent-nav {
+      position: relative;
+      padding-left: 6px;
+    }
+    #agent-nav::before {
+      content: "";
+      position: absolute;
+      top: 22px;
+      bottom: 22px;
+      left: 24px;
+      width: 2px;
+      background: linear-gradient(180deg, rgba(31,78,216,0.4), rgba(0,179,227,0.15));
+      border-radius: 2px;
+    }
+
+    .nav-item {
+      position: relative;
+      display: grid;
+      grid-template-columns: 36px 1fr;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 12px 10px 8px;
+      border-radius: 10px;
+      cursor: pointer;
+      color: #dbe2f1;
+      border: 1px solid transparent;
+      background: transparent;
+      text-align: left;
+      width: 100%;
+      transition: background 0.18s ease, border 0.18s ease, transform 0.05s ease;
+    }
+    .nav-item + .nav-item { margin-top: 4px; }
+
+    .nav-item:hover {
+      background: var(--sidebar-hover);
+      border-color: rgba(255,255,255,0.06);
+    }
+    .nav-item:active { transform: translateY(1px); }
+
+    .nav-item.active {
+      background:
+        linear-gradient(135deg, rgba(31,78,216,0.32), rgba(0,179,227,0.18)),
+        rgba(255,255,255,0.02);
+      border-color: rgba(0,179,227,0.45);
+      box-shadow:
+        0 6px 20px rgba(31,78,216,0.25),
+        inset 0 0 0 1px rgba(255,255,255,0.04);
+    }
+
+    .step-badge {
+      width: 36px; height: 36px;
+      border-radius: 10px;
+      background: rgba(255,255,255,0.06);
+      border: 1px solid rgba(255,255,255,0.08);
+      color: #cdd6e4;
+      font-size: 11px;
+      font-weight: 700;
+      letter-spacing: 0.5px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: background 0.18s ease, color 0.18s ease, border 0.18s ease;
+    }
+    .nav-item.active .step-badge {
+      background: var(--gradient-brand);
+      color: #fff;
+      border-color: rgba(255,255,255,0.25);
+      box-shadow: 0 4px 14px rgba(0,179,227,0.45);
+    }
+
+    .nav-text { min-width: 0; }
+    .nav-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: #f0f4ff;
+      line-height: 1.1;
+      display: block;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .nav-stage {
+      display: inline-block;
+      margin-top: 4px;
+      font-size: 10px;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+      color: #9fb1d6;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.06);
+      padding: 2px 6px;
+      border-radius: 999px;
+    }
+    .nav-item.active .nav-stage {
+      color: #fff;
+      background: rgba(255,255,255,0.16);
+      border-color: rgba(255,255,255,0.22);
+    }
+
+    .sidebar-footer {
+      margin-top: auto;
+      padding: 14px 12px;
+      font-size: 11px;
+      color: #7d8dac;
+      border-top: 1px solid rgba(255,255,255,0.06);
+      line-height: 1.5;
+    }
+    .sidebar-footer strong { color: #cdd6e4; font-weight: 600; }
+
+    /* ---------- Main ---------- */
+    main { padding: 24px; min-height: 0; display: flex; }
+
+    .chat-shell {
+      flex: 1;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      box-shadow:
+        0 12px 30px rgba(10,31,68,0.06),
+        0 1px 0 rgba(255,255,255,0.5) inset;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      min-height: 75vh;
+      position: relative;
+    }
+    /* Subtle top gradient accent */
+    .chat-shell::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 3px;
+      background: var(--gradient-brand);
+      opacity: 0.9;
+    }
+
+    .chat-shell-header {
+      padding: 18px 22px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      background: linear-gradient(180deg, #fbfcff, #ffffff);
+    }
+
+    .agent-meta { display: flex; align-items: center; gap: 14px; min-width: 0; }
+    .agent-mark {
+      width: 40px; height: 40px;
+      border-radius: 10px;
+      background: var(--gradient-brand);
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      display: inline-flex; align-items: center; justify-content: center;
+      box-shadow: 0 6px 14px rgba(31,78,216,0.25);
+      flex-shrink: 0;
+    }
+    .agent-text { min-width: 0; }
+    .chat-shell-header h1 {
+      margin: 0;
+      font-size: 17px;
+      font-weight: 700;
+      color: var(--majesco-navy);
+      letter-spacing: 0.1px;
+    }
+    .chat-shell-header p {
+      margin: 3px 0 0;
+      font-size: 12.5px;
+      color: var(--muted);
+      line-height: 1.4;
+    }
+
+    .header-actions { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .stage-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--majesco-blue);
+      background: var(--gradient-soft);
+      border: 1px solid rgba(31,78,216,0.18);
+      padding: 5px 10px;
+      border-radius: 999px;
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+    }
+    .status {
+      display: inline-flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--muted); white-space: nowrap;
+    }
+    .dot { width: 8px; height: 8px; border-radius: 50%; background: #c2c8d4; }
+    .dot.live {
+      background: var(--majesco-green);
+      box-shadow: 0 0 0 4px rgba(33,192,122,0.15);
+      animation: pulse 2s infinite;
+    }
+
+    /* Sales journey breadcrumb */
+    .journey-bar {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 10px 22px;
+      background: #f8faff;
+      border-bottom: 1px solid var(--border);
+      overflow-x: auto;
+    }
+    .journey-step {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--muted);
+      letter-spacing: 0.4px;
+      text-transform: uppercase;
+      font-weight: 600;
+      padding: 4px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+    }
+    .journey-step.active {
+      color: #fff;
+      background: var(--gradient-brand);
+      box-shadow: 0 4px 10px rgba(31,78,216,0.25);
+    }
+    .journey-arrow { color: #c2c8d4; font-size: 10px; flex-shrink: 0; }
+
+    /* Glean container */
+    .agent-wrapper {
+      flex: 1;
+      position: relative;
+      min-height: 600px;
+      animation: fadeIn 0.35s ease both;
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: none; }
+    }
+
+    #glean-app {
+      position: relative;
+      display: block;
+      height: 100%;
+      width: 100%;
+    }
+
+    /* ---------- Footer ---------- */
+    footer.site-footer {
+      text-align: center;
+      padding: 12px;
+      font-size: 12px;
+      color: var(--muted);
+      border-top: 1px solid var(--border);
+      background: #fff;
+    }
+
+    /* ---------- Responsive ---------- */
+    @media (max-width: 900px) {
+      .layout { grid-template-columns: 1fr; }
+      aside.sidebar {
+        flex-direction: row;
+        overflow-x: auto;
+        padding: 10px;
+        gap: 8px;
+      }
+      .sidebar-section-label, .sidebar-footer { display: none; }
+      #agent-nav { display: flex; gap: 8px; padding-left: 0; }
+      #agent-nav::before { display: none; }
+      .nav-item { width: auto; min-width: 200px; }
+      .brand-tagline { display: none; }
+      .user-chip .user-name { display: none; }
+    }
+  </style>
+</head>
+<body>
+  <!-- ---------- Header ---------- -->
+  <header class="site-header">
+    <div class="brand">
+      <img class="brand-mark" src="https://majescogroup.sharepoint.com/sites/BrandMarketing/Shared%20Documents/Key%20Templates%20%26%20Assets/Majesco%20Logos/MAJC%20Logo-reveresed%20out_rgb.png" alt="Majesco" />
+      <span class="brand-divider"></span>
+      <div>
+        <div class="brand-title">Precision Agent Hub</div>
+        <div class="brand-tagline">Powered by Glean</div>
+      </div>
+    </div>
+
+    <div class="header-right">
+      <span class="header-meta">v0.2 · Beta</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <!-- ---------- Sidebar ---------- -->
+    <aside class="sidebar" aria-label="Agent navigation">
+      <div class="sidebar-section-label">
+        <span class="pulse-dot"></span> Sales Journey
+      </div>
+      <nav id="agent-nav"></nav>
+      <div class="sidebar-footer">
+        <strong>Tip:</strong> Move through the journey from <em>Prospect</em> to <em>Coach</em>. Each agent is purpose-built for that stage of the sales cycle.
+      </div>
+    </aside>
+
+    <!-- ---------- Main ---------- -->
+    <main>
+      <section class="chat-shell" aria-label="Glean agent">
+        <div class="chat-shell-header">
+          <div class="agent-meta">
+            <span class="agent-mark" id="agent-mark">PP</span>
+            <div class="agent-text">
+              <h1 id="agent-title">Agent</h1>
+              <p id="agent-description">Loading…</p>
+            </div>
+          </div>
+          <div class="header-actions">
+            <span class="stage-pill" id="stage-pill">Stage</span>
+            <span class="status"><span class="dot live"></span> Connected</span>
+          </div>
+        </div>
+
+        <div class="journey-bar" id="journey-bar"></div>
+
+        <div class="agent-wrapper" id="agent-wrapper">
+          <!-- Glean renders the agent UI inside this container -->
+          <div id="glean-app" style="position: relative; display: block; height: 100%; width: 100%;"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <footer class="site-footer">
+    © <span id="year"></span> Majesco. All rights reserved.
+  </footer>
+
+  <!-- ---------- Render the Glean agent and wire up sidebar switching ---------- -->
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
+
+    // Sales journey stages — order matters and drives both sidebar + breadcrumb
+    const AGENTS = [
+      {
+        key: 'prospect-prism',
+        step: '01',
+        name: 'ProspectPrism',
+        initials: 'PP',
+        stage: 'Prospect',
+        description: 'Research prospects through multiple lenses to surface insights for outreach.',
+        agentId: '07fbe0b3b2c0430b9f8fc8dbddb32a43'
+      },
+      {
+        key: 'qualify-iq',
+        step: '02',
+        name: 'QualifyIQ',
+        initials: 'QI',
+        stage: 'Qualify',
+        description: 'Score and qualify opportunities with intelligent, criteria-driven analysis.',
+        agentId: 'eeaf61131086443bb3cdddd898d5a6a0'
+      },
+      {
+        key: 'discovery-prep',
+        step: '03',
+        name: 'DiscoveryPrep',
+        initials: 'DP',
+        stage: 'Discover',
+        description: 'Build tailored discovery agendas, questions, and account briefings.',
+        agentId: 'f01dfb0e5d8b480ab4199b241a2e5e71'
+      },
+      {
+        key: 'cbi-sharpener',
+        step: '04',
+        name: 'CBISharpener',
+        initials: 'CS',
+        stage: 'Pitch',
+        description: 'Refine Compelling Business Initiatives into crisp, customer-ready statements.',
+        agentId: '0f96a6bbc0f94cdcadeca59350f857d2'
+      },
+      {
+        key: 'coach-me',
+        step: '05',
+        name: 'CoachMe',
+        initials: 'CM',
+        stage: 'Coach',
+        description: 'On-demand sales coaching, role-play scenarios, and feedback.',
+        agentId: '9ebee137fab3488fbf9f43ed22322f22'
+      }
+    ];
+
+    let currentAgentKey = null;
+
+    function buildSidebar() {
+      const nav = document.getElementById('agent-nav');
+      nav.innerHTML = '';
+      AGENTS.forEach(agent => {
+        const btn = document.createElement('button');
+        btn.className = 'nav-item';
+        btn.dataset.key = agent.key;
+        btn.setAttribute('aria-label', `Open ${agent.name}`);
+        btn.innerHTML = `
+          <span class="step-badge">${agent.step}</span>
+          <span class="nav-text">
+            <span class="nav-name">${agent.name}</span>
+            <span class="nav-stage">${agent.stage}</span>
+          </span>
+        `;
+        btn.addEventListener('click', () => selectAgent(agent.key));
+        nav.appendChild(btn);
+      });
+    }
+
+    function buildJourneyBar(activeKey) {
+      const bar = document.getElementById('journey-bar');
+      bar.innerHTML = '';
+      AGENTS.forEach((agent, idx) => {
+        const step = document.createElement('span');
+        step.className = 'journey-step' + (agent.key === activeKey ? ' active' : '');
+        step.textContent = agent.stage;
+        bar.appendChild(step);
+        if (idx < AGENTS.length - 1) {
+          const arrow = document.createElement('span');
+          arrow.className = 'journey-arrow';
+          arrow.textContent = '→';
+          bar.appendChild(arrow);
+        }
+      });
+    }
+
+    function setActive(key) {
+      document.querySelectorAll('.nav-item').forEach(el => {
+        el.classList.toggle('active', el.dataset.key === key);
+      });
+    }
+
+    function renderAgent(agent) {
+      const container = document.getElementById('glean-app');
+      container.innerHTML = '';
+
+      if (window.GleanWebSDK && typeof window.GleanWebSDK.renderChat === 'function') {
+        window.GleanWebSDK.renderChat(container, {
+          agentId: agent.agentId,
+          customizations: {
+            features: {
+              chatMenu: false,
+              agentLibrary: false,
+              applicationLibrary: false,
+              newChatButton: false
+            }
+          }
+        });
+      } else {
+        setTimeout(() => renderAgent(agent), 50);
+      }
+    }
+
+    function selectAgent(key) {
+      const agent = AGENTS.find(a => a.key === key);
+      if (!agent || key === currentAgentKey) return;
+      currentAgentKey = key;
+
+      // Re-trigger the fade-in animation
+      const wrapper = document.getElementById('agent-wrapper');
+      wrapper.style.animation = 'none';
+      void wrapper.offsetWidth;
+      wrapper.style.animation = '';
+
+      document.getElementById('agent-title').textContent = agent.name;
+      document.getElementById('agent-description').textContent = agent.description;
+      document.getElementById('agent-mark').textContent = agent.initials;
+      document.getElementById('stage-pill').textContent = `${agent.step} · ${agent.stage}`;
+
+      setActive(key);
+      buildJourneyBar(key);
+      renderAgent(agent);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      buildSidebar();
+      selectAgent(AGENTS[0].key);
+    });
+  </script>
+</body>
+</html>
